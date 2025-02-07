@@ -224,3 +224,64 @@ func BenchmarkSyncMapStringStringMixed(b *testing.B) {
 		}
 	})
 }
+
+// Mutexmap2: sync.Map with type-safe wrapper:
+
+func BenchmarkMutexMap2StringStringWrite(b *testing.B) {
+	m := NewMutexmap2[string, string]()
+	b.ResetTimer()
+
+	b.RunParallel(func(pb *testing.PB) {
+		i := 0
+		for pb.Next() {
+			key := testKeyString + strconv.Itoa(i)
+			val := testValString + strconv.Itoa(i)
+			m.Set(key, val)
+			i++
+		}
+	})
+}
+
+func BenchmarkMutexMap2StringStringRead(b *testing.B) {
+	m := NewMutexmap2[string, string]()
+	for i := 0; i < 1000; i++ {
+		key := testKeyString + strconv.Itoa(i)
+		val := testValString + strconv.Itoa(i)
+		m.Set(key, val)
+	}
+	b.ResetTimer()
+
+	b.RunParallel(func(pb *testing.PB) {
+		i := 0
+		for pb.Next() {
+			key := testKeyString + strconv.Itoa(i%1000)
+			m.Get(key)
+			i++
+		}
+	})
+}
+
+func BenchmarkMutexMap2StringStringMixed(b *testing.B) {
+	m := NewMutexmap2[string, string]()
+	for i := 0; i < 1000; i++ {
+		key := testKeyString + strconv.Itoa(i)
+		val := testValString + strconv.Itoa(i)
+		m.Set(key, val)
+	}
+	b.ResetTimer()
+
+	b.RunParallel(func(pb *testing.PB) {
+		i := 0
+		for pb.Next() {
+			if i%10 == 0 { // 10% writes, 90% reads
+				key := testKeyString + strconv.Itoa(i)
+				val := testValString + strconv.Itoa(i)
+				m.Set(key, val)
+			} else {
+				key := testKeyString + strconv.Itoa(i%1000)
+				m.Get(key)
+			}
+			i++
+		}
+	})
+}
