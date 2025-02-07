@@ -4,14 +4,18 @@ import (
 	"sync"
 )
 
-// Mutexmap2 is simple typesafe wrapper around sync.Map.
+// Mutexmap2 is a simple typesafe wrapper around a sync.Map.
 // Note that Len() is slow here, as it must read
 // through every key in the map.
 type Mutexmap2[K comparable, V any] struct {
 	m *sync.Map
 }
 
-// NewMutexmap creates a new mutex-protected map.
+// NewMutexmap2 returns a new Mutexmap2, which internally
+// uses a sync.Map and simply adds type-safe access with generics.
+// Since we hold the internal sync.Map by pointer,
+// it is safe to copy the returned Mutexmap2 by value.
+// The internal sync.Map is shared between any such "copies".
 func NewMutexmap2[K comparable, V any]() *Mutexmap2[K, V] {
 	return &Mutexmap2[K, V]{
 		m: &sync.Map{},
